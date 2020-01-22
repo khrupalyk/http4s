@@ -50,7 +50,8 @@ class Http4sWSStageSpec extends Http4sSpec {
         ws = WebSocket[IO](outQ.dequeue, _.drain, IO(closeHook.set(true)))
         deadSignal <- SignallingRef[IO, Boolean](false)
         wsHead <- WSTestHead()
-        head = LeafBuilder(new Http4sWSStage[IO](ws, closeHook, deadSignal)).base(wsHead)
+        sinkQueue <- Queue.unbounded[IO, WebSocketFrame]
+        head = LeafBuilder(new Http4sWSStage[IO](ws, closeHook, deadSignal, sinkQueue)).base(wsHead)
         _ <- IO(head.sendInboundCommand(Command.Connected))
       } yield new TestWebsocketStage(outQ, head, closeHook)
   }
